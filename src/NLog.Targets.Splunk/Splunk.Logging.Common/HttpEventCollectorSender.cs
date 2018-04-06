@@ -26,6 +26,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Splunk.Logging
 {
@@ -250,7 +251,20 @@ namespace Splunk.Logging
 
         private void DoSerialization(HttpEventCollectorEventInfo ei)
         {
-            
+            // If data contains valid Json deserialize to avoid double serialization
+            if (ei.Event.Properties != null)
+            {
+                var properties = (Dictionary<String, object>)ei.Event.Properties;
+                foreach (var key in properties.Keys)
+                {
+                    var data = properties[key];
+                    if (data != null && IsValidJson(data.ToString()))
+                    {
+                        properties[key] = JsonConvert.DeserializeObject<object>(data.ToString());
+                    }
+                }
+            }
+
             string serializedEventInfo;
             if (formatter == null)
             {
@@ -440,6 +454,36 @@ namespace Splunk.Logging
         {
             Flush();
         }
+
+        private static bool IsValidJson(string strInput)
+        {
+            strInput = strInput.Trim();
+            if ((strInput.StartsWith("{") && strInput.EndsWith("}")) || //For object
+                (strInput.StartsWith("[") && strInput.EndsWith("]"))) //For array
+            {
+                try
+                {
+                    var obj = JToken.Parse(strInput);
+                    return true;
+                }
+                catch (JsonReaderException jex)
+                {
+                    //Exception in parsing json
+                    Console.WriteLine(jex.Message);
+                    return false;
+                }
+                catch (Exception ex) //some other exception
+                {
+                    Console.WriteLine(ex.ToString());
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
 
         #region HttpClientHandler.IDispose
 
