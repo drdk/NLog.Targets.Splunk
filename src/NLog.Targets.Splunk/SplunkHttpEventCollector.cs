@@ -65,7 +65,8 @@ namespace NLog.Targets.Splunk
             var properties = new Dictionary<String, object>
             {
                 {"Source", logEventInfo.LoggerName},
-                { "Host", GetMachineName()}
+                {"Host", GetMachineName()},
+                {"CorrelationId", (String)MappedDiagnosticsContext.GetObject("CorrelationId")},
             };
 
             // add attached properties
