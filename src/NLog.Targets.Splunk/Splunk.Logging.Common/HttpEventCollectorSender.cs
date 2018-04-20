@@ -20,6 +20,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -255,7 +256,8 @@ namespace Splunk.Logging
             if (ei.Event.Properties != null)
             {
                 var properties = (Dictionary<String, object>)ei.Event.Properties;
-                foreach (var key in properties.Keys)
+                var keys = properties.Keys.ToList();
+                foreach (var key in keys)
                 {
                     var data = properties[key];
                     if (data != null && IsValidJson(data.ToString()))
